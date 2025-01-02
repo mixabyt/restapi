@@ -19,11 +19,12 @@ func (s *SellerRepository) Create(seller *model.Seller) error {
 	}
 
 	err := s.store.db.QueryRow(
-		"INSERT INTO sellers (phone_number, encrypted_password, first_name, second_name) VALUES ($1, $2, $3, $4) RETURNING id",
+		"INSERT INTO sellers (phone_number, encrypted_password, first_name, second_name, admin_id) VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		seller.PhoneNumber,
 		seller.EncryptedPassword,
 		seller.FirstName,
 		seller.SecondName,
+		seller.AdminID,
 	).Scan(&seller.ID)
 	pgErr, ok := err.(*pq.Error)
 	if ok {
@@ -35,10 +36,12 @@ func (s *SellerRepository) Create(seller *model.Seller) error {
 }
 
 func (s *SellerRepository) GetAll(adminID int) ([]*model.Seller, error) {
-	rows, err := s.store.db.Query("SELECT id, first_name, second_name, phone_number FROM sellers")
+
+	rows, err := s.store.db.Query("SELECT id, first_name, second_name, phone_number FROM sellers WHERE admin_id = $1", adminID)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var sellers []*model.Seller
 	for rows.Next() {

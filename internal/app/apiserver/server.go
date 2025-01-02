@@ -41,7 +41,7 @@ func (s *server) configureRouter() {
 	admin.HandleFunc("/categories", s.HandleCategoriesGet()).Methods(http.MethodGet)
 	// admin.HandleFunc("/category/{id}", HandleCategoryGet()).Methods(http.MethodGet)
 
-	// admin.HandleFunc("/product", s.HandleProductCreate()).Methods(http.MethodPost)
+	admin.HandleFunc("/product", s.HandleProductCreate()).Methods(http.MethodPost)
 
 	// seller := s.router.PathPrefix("seller").Subrouter()
 	// seller.HandleFunc("/goods", s.HandleGoodsGet).Methods(http.MethodGet)
@@ -67,6 +67,7 @@ func (s *server) HandleSellerCreate() http.HandlerFunc {
 			SecondName:  req.SecondName,
 			Password:    req.Password,
 		}
+		seller.AdminID = 1
 
 		if err := s.store.Seller().Create(seller); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
@@ -104,6 +105,8 @@ func (s *server) HandleCategoryCreate() http.HandlerFunc {
 		category := &model.Category{
 			Name: req.Name,
 		}
+
+		category.AdminID = 1
 		if err := s.store.Category().Create(category); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -121,6 +124,23 @@ func (s *server) HandleCategoriesGet() http.HandlerFunc {
 			return
 		}
 		s.respond(w, r, http.StatusOK, categoriest)
+	}
+}
+
+func (s *server) HandleProductCreate() http.HandlerFunc {
+	type request struct {
+		Name           string `json:"name"`
+		Price          int    `json:"price"`
+		MeasudeUnitsID int    `json:"measude_units_id"`
+		CategoryID     int    `json:"category_id"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
 	}
 }
 

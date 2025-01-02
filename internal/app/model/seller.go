@@ -14,6 +14,7 @@ type Seller struct {
 	PhoneNumber       string `json:"phone_number"`
 	Password          string `json:"password,omitempty"`
 	EncryptedPassword string `json:"-"`
+	AdminID           int    `json:"-"`
 }
 
 func (s *Seller) Validate() error {

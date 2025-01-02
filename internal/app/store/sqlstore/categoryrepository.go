@@ -11,13 +11,14 @@ func (c *CategoryRepository) Create(category *model.Category) error {
 		return err
 	}
 	return c.store.db.QueryRow(
-		"INSERT INTO categories (name) VALUES ($1) RETURNING id",
+		"INSERT INTO categories (name, admin_id) VALUES ($1, $2) RETURNING id",
 		category.Name,
+		category.AdminID,
 	).Scan(&category.ID)
 }
 
 func (c *CategoryRepository) GetAll(adminID int) ([]*model.Category, error) {
-	rows, err := c.store.db.Query("SELECT id, name FROM categories")
+	rows, err := c.store.db.Query("SELECT id, name FROM categories WHERE admin_id = $1", adminID)
 	if err != nil {
 		return nil, err
 	}
