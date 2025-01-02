@@ -1,0 +1,10 @@
+- sellers
+    migrate -database "postgres://postgres:123@localhost:5432/ivanov?sslmode=disable" -path ./migrations/sellers up
+
+-categories
+    migrate -database "postgres://postgres:123@localhost:5432/ivanov?sslmode=disable" -path ./migrations/categories up
+
+
+    (
+        migrate create -ext sql -dir ./migrations/categories categories
+    )()
