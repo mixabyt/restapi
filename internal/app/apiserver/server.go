@@ -5,6 +5,7 @@ import (
 	"mdl/internal/app/model"
 	"mdl/internal/app/store"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -37,9 +38,11 @@ func (s *server) configureRouter() {
 	admin.HandleFunc("/seller", s.HandleSellerCreate()).Methods(http.MethodPost)
 	admin.HandleFunc("/sellers", s.HandleSellersGet()).Methods(http.MethodGet)
 
+	admin.HandleFunc("/measureunits", s.HandleMeasureUnitsGet()).Methods(http.MethodGet)
+
 	admin.HandleFunc("/category", s.HandleCategoryCreate()).Methods(http.MethodPost)
 	admin.HandleFunc("/categories", s.HandleCategoriesGet()).Methods(http.MethodGet)
-	// admin.HandleFunc("/category/{id}", HandleCategoryGet()).Methods(http.MethodGet)
+	admin.HandleFunc("/category/{id}", s.HandleCategoryGet()).Methods(http.MethodGet)
 
 	admin.HandleFunc("/product", s.HandleProductCreate()).Methods(http.MethodPost)
 
@@ -88,7 +91,22 @@ func (s *server) HandleSellersGet() http.HandlerFunc {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		s.respond(w, r, http.StatusOK, sellers)
+		sexyjson := make(map[string][]*model.Seller)
+		sexyjson["data"] = sellers
+		s.respond(w, r, http.StatusOK, sexyjson)
+	}
+}
+
+func (s *server) HandleMeasureUnitsGet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		measureUnits, err := s.store.MeasureUnits().GetAll()
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		sexyjson := make(map[string][]*model.MeasureUnits)
+		sexyjson["data"] = measureUnits
+		s.respond(w, r, http.StatusOK, sexyjson)
 	}
 }
 
@@ -118,12 +136,33 @@ func (s *server) HandleCategoryCreate() http.HandlerFunc {
 func (s *server) HandleCategoriesGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		adminid := 1
-		categoriest, err := s.store.Category().GetAll(adminid)
+		categories, err := s.store.Category().GetAll(adminid)
 		if err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		s.respond(w, r, http.StatusOK, categoriest)
+		sexyjson := make(map[string][]*model.Category)
+		sexyjson["data"] = categories
+		s.respond(w, r, http.StatusOK, sexyjson)
+	}
+}
+
+func (s *server) HandleCategoryGet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+		}
+		adminID := 1
+		products, err := s.store.Product().Get(adminID, id)
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		sexyjson := make(map[string][]*model.Product)
+		sexyjson["data"] = products
+		s.respond(w, r, http.StatusOK, sexyjson)
+
 	}
 }
 
@@ -131,7 +170,7 @@ func (s *server) HandleProductCreate() http.HandlerFunc {
 	type request struct {
 		Name           string `json:"name"`
 		Price          int    `json:"price"`
-		MeasudeUnitsID int    `json:"measude_units_id"`
+		MeasureUnitsID int    `json:"measure_units_id"`
 		CategoryID     int    `json:"category_id"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +179,18 @@ func (s *server) HandleProductCreate() http.HandlerFunc {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
+		product := &model.Product{
+			Name:           req.Name,
+			Price:          req.Price,
+			MeasureUnitsID: req.MeasureUnitsID,
+			CategoryID:     req.CategoryID,
+		}
+
+		if err := s.store.Product().Create(product); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusCreated, product)
 
 	}
 }

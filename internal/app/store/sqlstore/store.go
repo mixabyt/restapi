@@ -6,9 +6,11 @@ import (
 )
 
 type Store struct {
-	db                 *sql.DB
-	sellerRepository   *SellerRepository
-	categoryRepository *CategoryRepository
+	db                     *sql.DB
+	sellerRepository       *SellerRepository
+	categoryRepository     *CategoryRepository
+	measureUnitsRepository *MeasureUnitsRepository
+	productRepository      *ProductRepository
 }
 
 func New(db *sql.DB) *Store {
@@ -35,4 +37,24 @@ func (s *Store) Category() store.CategoryRepository {
 		store: s,
 	}
 	return s.categoryRepository
+}
+
+func (s *Store) MeasureUnits() store.MeasureUnitsRepository {
+	if s.measureUnitsRepository != nil {
+		return s.measureUnitsRepository
+	}
+	s.measureUnitsRepository = &MeasureUnitsRepository{
+		store: s,
+	}
+	return s.measureUnitsRepository
+}
+
+func (s *Store) Product() store.ProductRepository {
+	if s.productRepository != nil {
+		return s.productRepository
+	}
+	s.productRepository = &ProductRepository{
+		store: s,
+	}
+	return s.productRepository
 }

@@ -15,6 +15,6 @@ type Category struct {
 func (c *Category) Validate() error {
 	return validation.ValidateStruct(
 		c,
-		validation.Field(&c.Name, validation.Required, validation.Match(regexp.MustCompile(`^[А-Яа-яіїєґ]+$`))),
+		validation.Field(&c.Name, validation.Required, validation.Match(regexp.MustCompile(`^[а-яА-Яa-zA-ZіІїЇєЄґҐ0-9\s.,!?;:'"-()]*$`))),
 	)
 }
